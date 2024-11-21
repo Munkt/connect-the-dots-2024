@@ -5,6 +5,7 @@ const nextBtn = document.getElementById("next");
 const previousBtn = document.getElementById("previous");
 const startBtn = document.getElementById("start");
 const cover = document.querySelector(".cover");
+const newLineBtn = document.getElementById("new-line");
 
 // 슬라이드별 문구 데이터
 const slideDescriptions = [
@@ -25,11 +26,10 @@ const slideDescriptions = [
   "And something inside us slowly withers. ",
   "This realm of normality is painfully narrow.",
   "Some quietly veer off course from this structure. ",
-  "It takes immense courage to do so, but it doesn’t mean weakness or abnormality.",
-  "Once stepped outside, it feels nice. ",
-  "And we can place our own dots wherever we desire.",
-  "Or we might not need guidelines at all.",
-  "What we draw shapes who we are. ",
+  "It takes immense courage to do so.",
+  "Once stepped outside, it feels better. ",
+  "And we can place our own dots wherever we want.",
+  "or just nothing at all.",
   "What matters is what I feel and think, not others.",
 ];
 
@@ -97,6 +97,11 @@ refreshBtn.addEventListener("click", () => {
     const ctx = currentCanvas.getContext("2d");
     ctx.clearRect(0, 0, currentCanvas.width, currentCanvas.height);
   }
+  lastX = null;
+  lastY = null;
+});
+
+newLineBtn.addEventListener("click", () => {
   lastX = null;
   lastY = null;
 });

@@ -6,6 +6,7 @@
 }
 :root {
   --beige: #f7f6f2;
+  --red: #f54e42;
 }
 * {
   margin: 0;
@@ -109,6 +110,15 @@ button:hover {
   border-bottom: solid #000000 1px;
   width: 100%;
 }
+.canvas-btn {
+  position: absolute;
+  display: flex;
+  top: 8.5rem;
+  width: 50vw;
+  justify-content: space-between;
+  padding: 2rem;
+  z-index: 40;
+}
 .slide {
   display: flex;
   flex-direction: column;
@@ -119,7 +129,7 @@ button:hover {
 }
 .overlay {
   position: absolute;
-  top: 45%;
+  top: 47%;
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
@@ -160,7 +170,7 @@ button:hover {
     padding-bottom: 1rem;
   }
   > button {
-    color: #f54e42;
+    color: var(--red);
   }
 }
 //navigation
