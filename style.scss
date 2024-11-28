@@ -26,10 +26,20 @@ html {
   font-weight: 300;
   font-style: normal;
   letter-spacing: -0.1rem;
-  line-height: 136%;
+  line-height: 154%;
   background-color: var(--beige);
   display: flex;
   flex-direction: row;
+}
+
+a {
+  color: interit;
+  text-decoration: underline dotted;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 4px;
+}
+a:visited {
+  color: inherit;
 }
 
 button {
@@ -106,8 +116,8 @@ button:hover {
 }
 .description {
   text-align: center;
-  padding: 3rem;
-  border-bottom: solid #000000 1px;
+  padding: 3rem 0rem 0rem 0rem;
+  // border-bottom: solid #000000 1px;
   width: 100%;
 }
 .canvas-btn {
@@ -129,7 +139,7 @@ button:hover {
 }
 .overlay {
   position: absolute;
-  top: 47%;
+  top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   pointer-events: none;
@@ -138,12 +148,13 @@ button:hover {
   align-items: center;
   pointer-events: none;
   user-select: none;
+  z-index: 10;
 }
 .drawing-canvas {
   display: block;
   width: 756px;
   height: 650px;
-  // background-color: aquamarine;
+  z-index: 5;
 }
 //cover
 .cover {
@@ -173,6 +184,21 @@ button:hover {
     color: var(--red);
   }
 }
+
+#user-video {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 80%;
+  height: 100%;
+  max-height: 650px; /* Matches canvas height */
+
+  filter: grayscale(50%) contrast(60%) brightness(100%);
+  background-blend-mode: multiply;
+  background-size: cover;
+}
+
 //navigation
 .navigation {
   position: absolute;

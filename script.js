@@ -5,76 +5,55 @@ const nextBtn = document.getElementById("next");
 const previousBtn = document.getElementById("previous");
 const startBtn = document.getElementById("start");
 const cover = document.querySelector(".cover");
-const newLineBtn = document.getElementById("new-line");
 
-// 슬라이드별 문구 데이터
-const slideDescriptions = [
-  "Life, they say, is about connecting the right dots.",
-  "These predetermined dots trace once path, a single way forward.",
-  "Everyone follows the same trail , chasing the same purpose,",
-  "rarely questioning what is truly right for them.",
-  "But this opportunity is not for everyone. ",
-  "Choosing a different path means confronting fear.",
-  "It feels safe to follow others.",
-  "Groups form, clustering individual into one among many.",
-  "We are constantly connected, we feel complete and safe.",
-  "Yet an invisible line divides each individual, an unspoken competition.",
-  "To progress quickly, a hierarchical structure is deemed efficient. ",
-  "We instinctively conform to it to survive, rarely questioning the direction and decisions.",
-  "As everyone complies, raising objection feels abnormal.",
-  "This who do are labeled as ‘peculiar’. ",
-  "And something inside us slowly withers. ",
-  "This realm of normality is painfully narrow.",
-  "Some quietly veer off course from this structure. ",
-  "It takes immense courage to do so.",
-  "Once stepped outside, it feels better. ",
-  "And we can place our own dots wherever we want.",
-  "or just nothing at all.",
-  "What matters is what I feel and think, not others.",
-];
-
-// 이전 점의 좌표
+// Previous point coordinates
 let lastX = null;
 let lastY = null;
 
-// 커버 숨기기
+// Hide cover on start
 startBtn.addEventListener("click", () => {
   if (cover) {
     cover.style.display = "none";
   }
 });
 
-// 슬라이드 표시 함수
+let slide5ClickCount = 0;
+
+// Function to display a specific slide
 function showSlide(index) {
   slides.forEach((slide, i) => {
     slide.style.display = i === index ? "block" : "none";
   });
 
-  // 버튼 활성화/비활성화
+  // Enable/disable navigation buttons
   previousBtn.disabled = index === 0;
   nextBtn.disabled = index === slides.length - 1;
 
-  // 슬라이드 카운터와 문구 업데이트
-  const counter = document.querySelector(".description p:first-child");
-  const description = document.getElementById("slide-description");
-
-  if (counter) {
-    counter.textContent = `${index + 1}/${slides.length}`; // 슬라이드 카운터
-  }
-
-  if (description) {
-    description.textContent = slideDescriptions[index]; // 슬라이드 문구
-  }
-
-  // 이전 점 초기화 (새 슬라이드에서 새로운 선 그리기)
+  // Reset drawing coordinates (new line for new slide)
   lastX = null;
   lastY = null;
+
+  // Handle special rules for slide 5
+  if (index === 4) {
+    // Slide 5 is at index 4 (zero-based indexing)
+    slide5ClickCount = 0; // Reset click count when entering slide 5
+    nextBtn.disabled = true; // Disable next button initially
+  } else {
+    nextBtn.disabled = false; // Enable next button for other slides
+  }
+  if (index === 6) {
+    // Slide 7 is at index 6
+    const videoElement = document.getElementById("user-video");
+    if (videoElement) {
+      initializeCamera(videoElement);
+    }
+  }
 }
 
-// 초기화: 첫 번째 슬라이드 표시
+// Initialize: Show the first slide
 showSlide(currentSlideIndex);
 
-// 다음 버튼
+// Next button
 nextBtn.addEventListener("click", () => {
   if (currentSlideIndex < slides.length - 1) {
     currentSlideIndex++;
@@ -82,7 +61,7 @@ nextBtn.addEventListener("click", () => {
   }
 });
 
-// 이전 버튼
+// Previous button
 previousBtn.addEventListener("click", () => {
   if (currentSlideIndex > 0) {
     currentSlideIndex--;
@@ -90,7 +69,7 @@ previousBtn.addEventListener("click", () => {
   }
 });
 
-// 새로고침 버튼
+// Refresh button
 refreshBtn.addEventListener("click", () => {
   const currentCanvas = getCurrentCanvas();
   if (currentCanvas) {
@@ -101,79 +80,100 @@ refreshBtn.addEventListener("click", () => {
   lastY = null;
 });
 
-newLineBtn.addEventListener("click", () => {
-  lastX = null;
-  lastY = null;
-});
-
-// 현재 슬라이드의 캔버스를 가져오기
+// Get the canvas of the current slide
 function getCurrentCanvas() {
   return slides[currentSlideIndex].querySelector(".drawing-canvas");
 }
 
-// 캔버스 초기화
+// Initialize the canvas
 function initializeCanvas(canvas) {
   const ctx = canvas.getContext("2d");
 
-  // 고정된 캔버스 스타일 크기
-  const width = 756; // 스타일 너비
-  const height = 650; // 스타일 높이
+  // Set fixed canvas dimensions
+  const width = 756; // Style width
+  const height = 650; // Style height
 
-  // 캔버스의 스타일 크기를 설정
+  // Apply style dimensions
   canvas.style.width = `${width}px`;
   canvas.style.height = `${height}px`;
 
-  // 고해상도 디스플레이 지원 (devicePixelRatio)
+  // Support high-resolution displays (devicePixelRatio)
   const ratio = window.devicePixelRatio || 1;
 
-  // 캔버스의 실제 픽셀 크기를 설정
+  // Set actual pixel dimensions
   canvas.width = width * ratio;
   canvas.height = height * ratio;
 
-  // 스케일링 적용 (고해상도 디스플레이 대응)
+  // Apply scaling
   ctx.scale(ratio, ratio);
 
-  // 클릭 이벤트 추가
+  // Add click event for drawing
   canvas.addEventListener("click", (e) => {
-    const rect = canvas.getBoundingClientRect(); // 캔버스의 경계 좌표
+    const rect = canvas.getBoundingClientRect(); // Canvas boundary coordinates
 
-    // 뷰포트 기준 좌표를 캔버스 내부 좌표로 변환
+    // Convert viewport coordinates to canvas coordinates
     const x = ((e.clientX - rect.left) * (canvas.width / rect.width)) / ratio;
     const y = ((e.clientY - rect.top) * (canvas.height / rect.height)) / ratio;
 
-    // 점 찍기
+    // Draw a point
     ctx.beginPath();
-    ctx.arc(x, y, 3, 0, Math.PI * 2); // 반지름 3px의 원
-    ctx.fillStyle = "#f54e42"; // 점 색상
+    ctx.arc(x, y, 3, 0, Math.PI * 2); // 3px radius
+    ctx.fillStyle = "#f54e42"; // Point color
     ctx.fill();
 
-    // 이전 점이 있다면 선을 그림
+    // Draw a line to the previous point if it exists
     if (lastX !== null && lastY !== null) {
       ctx.beginPath();
-      ctx.moveTo(lastX, lastY); // 이전 점
-      ctx.lineTo(x, y); // 현재 점
-      ctx.strokeStyle = "#f54e42"; // 선 색상
-      ctx.lineWidth = 2; // 선 두께
+      ctx.moveTo(lastX, lastY); // Move to the last point
+      ctx.lineTo(x, y); // Draw to the current point
+      ctx.strokeStyle = "#f54e42"; // Line color
+      ctx.lineWidth = 2; // Line thickness
       ctx.stroke();
     }
 
-    // 현재 점을 이전 점으로 저장
+    // Update last coordinates
     lastX = x;
     lastY = y;
-  });
 
-  // 더블 클릭 이벤트 추가
-  canvas.addEventListener("dblclick", () => {
-    // 이전 점 초기화 (새로운 선 시작)
-    lastX = null;
-    lastY = null;
+    // Special rule for slide 5
+    if (currentSlideIndex === 4) {
+      // Slide 5 is at index 4
+      slide5ClickCount++; // Increment click count
+
+      if (slide5ClickCount >= 8) {
+        alert("I feel odd"); // Show alert when 8 or more clicks
+        nextBtn.disabled = false; // Enable next button after 8 clicks
+      }
+    }
+
+    if (currentSlideIndex === 5) {
+      // Slide 6 is at index 5 (zero-based)
+      alert("I am scared!ヾ( •́д•̀ ;)ﾉ");
+    }
   });
 }
 
-// 모든 슬라이드의 캔버스 초기화
+// Initialize all canvases
 slides.forEach((slide) => {
   const canvas = slide.querySelector(".drawing-canvas");
   if (canvas) {
     initializeCanvas(canvas);
   }
 });
+
+function initializeCamera(videoElement) {
+  // Check for media device support
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    navigator.mediaDevices
+      .getUserMedia({ video: true }) // Request video stream
+      .then((stream) => {
+        videoElement.srcObject = stream; // Assign stream to video element
+      })
+      .catch((error) => {
+        console.error("Camera access denied or unavailable:", error);
+        alert("Unable to access your camera. Please enable it in your browser.");
+      });
+  } else {
+    alert("Camera not supported on this device.");
+  }
+}
