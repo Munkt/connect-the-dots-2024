@@ -5,6 +5,7 @@ const nextBtn = document.getElementById("next");
 const previousBtn = document.getElementById("previous");
 const startBtn = document.getElementById("start");
 const cover = document.querySelector(".cover");
+const RED_COLOR = "#f54e42";
 
 // Previous point coordinates
 let lastX = null;
@@ -25,28 +26,32 @@ function showSlide(index) {
     slide.style.display = i === index ? "block" : "none";
   });
 
-  // Enable/disable navigation buttons
   previousBtn.disabled = index === 0;
   nextBtn.disabled = index === slides.length - 1;
 
-  // Reset drawing coordinates (new line for new slide)
   lastX = null;
   lastY = null;
 
-  // Handle special rules for slide 5
-  if (index === 4) {
-    // Slide 5 is at index 4 (zero-based indexing)
-    slide5ClickCount = 0; // Reset click count when entering slide 5
-    nextBtn.disabled = true; // Disable next button initially
-  } else {
-    nextBtn.disabled = false; // Enable next button for other slides
+  if (index >= 0 && index <= 5) {
+    const currentCanvas = slides[index].querySelector(".drawing-canvas");
+    if (currentCanvas) {
+      initializeCanvas(currentCanvas);
+    }
   }
+
   if (index === 6) {
-    // Slide 7 is at index 6
+    // Initialize camera on slide 7
     const videoElement = document.getElementById("user-video");
     if (videoElement) {
       initializeCamera(videoElement);
     }
+  } else if (index === 7 && cameraStream) {
+    // Stop the camera when moving to slide 8
+    stopCamera();
+  }
+
+  if (index === 8) {
+    initializeSlide9(); // Initialize slide 9 functionality
   }
 }
 
@@ -107,7 +112,10 @@ function initializeCanvas(canvas) {
   // Apply scaling
   ctx.scale(ratio, ratio);
 
-  // Add click event for drawing
+  let slide5ClickCount = 0;
+  let alertShownForSlide5 = false; // Slide 5 alert 표시 여부
+  // let alertShownForSlide6 = false; // Slide 6 alert 표시 여부
+  // Add click event for drawing with slide-specific logic
   canvas.addEventListener("click", (e) => {
     const rect = canvas.getBoundingClientRect(); // Canvas boundary coordinates
 
@@ -118,7 +126,7 @@ function initializeCanvas(canvas) {
     // Draw a point
     ctx.beginPath();
     ctx.arc(x, y, 3, 0, Math.PI * 2); // 3px radius
-    ctx.fillStyle = "#f54e42"; // Point color
+    ctx.fillStyle = RED_COLOR; // Point color
     ctx.fill();
 
     // Draw a line to the previous point if it exists
@@ -126,8 +134,8 @@ function initializeCanvas(canvas) {
       ctx.beginPath();
       ctx.moveTo(lastX, lastY); // Move to the last point
       ctx.lineTo(x, y); // Draw to the current point
-      ctx.strokeStyle = "#f54e42"; // Line color
-      ctx.lineWidth = 2; // Line thickness
+      ctx.strokeStyle = RED_COLOR; // Line color
+      ctx.lineWidth = 2;
       ctx.stroke();
     }
 
@@ -137,18 +145,17 @@ function initializeCanvas(canvas) {
 
     // Special rule for slide 5
     if (currentSlideIndex === 4) {
-      // Slide 5 is at index 4
       slide5ClickCount++; // Increment click count
-
-      if (slide5ClickCount >= 8) {
-        alert("I feel odd"); // Show alert when 8 or more clicks
-        nextBtn.disabled = false; // Enable next button after 8 clicks
+      if (slide5ClickCount >= 8 && !alertShownForSlide5) {
+        alert("I feel odd...");
+        alertShownForSlide5 = true; // Ensure alert only shows once
+        nextBtn.disabled = false; // Enable next button
       }
     }
 
+    // Special rule for slide 6
     if (currentSlideIndex === 5) {
-      // Slide 6 is at index 5 (zero-based)
-      alert("I am scared!ヾ( •́д•̀ ;)ﾉ");
+      alert("I am scared."); // Show alert every click
     }
   });
 }
@@ -162,12 +169,12 @@ slides.forEach((slide) => {
 });
 
 function initializeCamera(videoElement) {
-  // Check for media device support
   if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
     navigator.mediaDevices
-      .getUserMedia({ video: true }) // Request video stream
+      .getUserMedia({ video: true })
       .then((stream) => {
-        videoElement.srcObject = stream; // Assign stream to video element
+        cameraStream = stream; // Store the stream
+        videoElement.srcObject = stream;
       })
       .catch((error) => {
         console.error("Camera access denied or unavailable:", error);
@@ -177,3 +184,227 @@ function initializeCamera(videoElement) {
     alert("Camera not supported on this device.");
   }
 }
+
+function stopCamera() {
+  if (cameraStream) {
+    const tracks = cameraStream.getTracks();
+    tracks.forEach((track) => track.stop()); // Stop all tracks
+    cameraStream = null;
+  }
+}
+
+function initializeSlide8Canvas(canvas) {
+  const ctx = canvas.getContext("2d");
+
+  // 고해상도 디스플레이 지원을 위한 ratio 계산
+  const ratio = window.devicePixelRatio || 1;
+
+  // 캔버스 중앙 점의 좌표
+  const centerX = canvas.width / 2 / ratio; // 캔버스 중앙 X 좌표
+  const centerY = canvas.height / 2 / ratio; // 캔버스 중앙 Y 좌표
+
+  // 선 색상 배열
+  const colors = ["#f7c4c4", "#f4a69e", "#f0867a", "#ec6358", "#d82121"];
+
+  // 선을 그리는 함수
+  function drawLine(x, y) {
+    const randomColor = colors[Math.floor(Math.random() * colors.length)]; // 랜덤 색상 선택
+
+    // 선 그리기
+    ctx.beginPath();
+    ctx.moveTo(centerX, centerY); // 중앙에서 시작
+    ctx.lineTo(x, y); // 마우스 좌표로 이어짐
+    ctx.strokeStyle = randomColor;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    // 끝점에 동일한 점 그리기
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2); // 3px 반지름
+    ctx.fillStyle = randomColor;
+    ctx.fill();
+  }
+
+  // 마우스 움직임 이벤트 추가
+  canvas.addEventListener("mousemove", (e) => {
+    const rect = canvas.getBoundingClientRect(); // 캔버스의 경계 좌표
+    const x = ((e.clientX - rect.left) * (canvas.width / rect.width)) / ratio; // 마우스 X 좌표
+    const y = ((e.clientY - rect.top) * (canvas.height / rect.height)) / ratio; // 마우스 Y 좌표
+
+    drawLine(x, y); // 선 그리기 호출
+  });
+
+  // 중앙 점 그리기
+  ctx.beginPath();
+  ctx.arc(centerX, centerY, 3, 0, Math.PI * 2); // 3px 반지름
+  ctx.fillStyle = RED_COLOR; // 중앙 점 색상
+  ctx.fill();
+}
+
+// 8번 슬라이드의 캔버스 초기화 호출
+const slide8Canvas = document.querySelector("#slide8 .drawing-canvas");
+if (slide8Canvas) {
+  // 고해상도 디스플레이 지원 설정
+  const ctx = slide8Canvas.getContext("2d");
+  const ratio = window.devicePixelRatio || 1;
+  const width = 756;
+  const height = 650;
+
+  slide8Canvas.style.width = `${width}px`;
+  slide8Canvas.style.height = `${height}px`;
+  slide8Canvas.width = width * ratio;
+  slide8Canvas.height = height * ratio;
+
+  ctx.scale(ratio, ratio);
+  initializeSlide8Canvas(slide8Canvas);
+}
+
+function initializeSlide9() {
+  const svgPath = document.querySelector("#slide9 .svg-stroke path");
+
+  if (!svgPath) {
+    console.error("SVG path not found for slide 9");
+    return;
+  }
+
+  // Get the total length of the SVG path
+  const pathLength = svgPath.getTotalLength();
+
+  // Initialize the stroke properties
+  svgPath.style.strokeDasharray = pathLength; // Set the dasharray to the total length
+  svgPath.style.strokeDashoffset = pathLength; // Initially hide the stroke
+
+  let currentOffset = pathLength; // Initialize the current offset
+  let targetOffset = pathLength; // Target offset to animate toward
+  let lastMouseX = null; // Track last mouse position for movement detection
+
+  // Ease function
+  function ease(current, target, easeFactor = 0.1) {
+    return current + (target - current) * easeFactor;
+  }
+
+  // Animation loop for smooth easing
+  function animate() {
+    currentOffset = ease(currentOffset, targetOffset);
+    svgPath.style.strokeDashoffset = currentOffset;
+
+    if (Math.abs(currentOffset - targetOffset) > 0.1) {
+      requestAnimationFrame(animate);
+    }
+  }
+
+  // Mouse move event on the document
+  document.addEventListener("mousemove", (e) => {
+    const rect = document.body.getBoundingClientRect();
+    const x = e.clientX - rect.left; // Mouse X relative to the body
+
+    if (lastMouseX !== null) {
+      // Calculate distance moved since last mouse position
+      const distanceMoved = Math.abs(x - lastMouseX);
+
+      // Reduce targetOffset based on movement
+      targetOffset = Math.max(0, targetOffset - distanceMoved * 0.5); // Scale distance for slower stroke
+      animate(); // Trigger animation
+    }
+
+    lastMouseX = x; // Update last mouse position
+  });
+
+  // Reset lastMouseX on mouse leave
+  document.addEventListener("mouseleave", () => {
+    lastMouseX = null;
+  });
+}
+
+function initializeSlide10Canvas(canvas) {
+  const ctx = canvas.getContext("2d");
+  const colors = ["#f7c4c4", "#f4a69e", "#f0867a", "#ec6358", "#d82121"];
+
+  // High-resolution display support
+  const ratio = window.devicePixelRatio || 1;
+  const width = 756;
+  const height = 650;
+
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
+  canvas.width = width * ratio;
+  canvas.height = height * ratio;
+  ctx.scale(ratio, ratio);
+
+  let lastDotX = null;
+  let lastDotY = null;
+
+  // Place a dot at the current position
+  function placeDot(x, y) {
+    const dotColor = colors[Math.floor(Math.random() * colors.length)];
+    ctx.beginPath();
+    ctx.arc(x, y, 3, 0, Math.PI * 2); // 3px radius
+    ctx.fillStyle = dotColor;
+    ctx.fill();
+  }
+
+  // Draw a line between the last dot and the current dot
+  function drawLineToDot(x, y) {
+    const lineColor = colors[Math.floor(Math.random() * colors.length)];
+    ctx.beginPath();
+    ctx.moveTo(lastDotX, lastDotY);
+    ctx.lineTo(x, y);
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  }
+
+  // Mouse move event on the canvas
+  canvas.addEventListener("mousemove", (e) => {
+    const rect = canvas.getBoundingClientRect();
+    const x = ((e.clientX - rect.left) * (canvas.width / rect.width)) / ratio;
+    const y = ((e.clientY - rect.top) * (canvas.height / rect.height)) / ratio;
+
+    // Place a dot and connect it to the last dot at random intervals
+    if (Math.random() < 0.05) {
+      // 5% chance per mousemove
+      if (lastDotX !== null && lastDotY !== null) {
+        drawLineToDot(x, y); // Draw a line to the new dot
+      }
+
+      placeDot(x, y); // Place the new dot
+      lastDotX = x; // Update last dot position
+      lastDotY = y;
+    }
+  });
+
+  // Reset coordinates when mouse leaves canvas
+  canvas.addEventListener("mouseleave", () => {
+    lastDotX = null;
+    lastDotY = null;
+  });
+}
+
+// Initialize slide 10 canvas
+const slide10Canvas = document.querySelector("#slide10 .drawing-canvas");
+if (slide10Canvas) {
+  initializeSlide10Canvas(slide10Canvas);
+}
+
+// Function to download the current canvas as an image
+function saveArtwork() {
+  const currentCanvas = getCurrentCanvas(); // Get the current canvas
+  if (currentCanvas) {
+    // Create a temporary link element
+    const link = document.createElement("a");
+
+    // Convert the canvas content to a data URL
+    link.href = currentCanvas.toDataURL("image/png");
+
+    // Set the download attribute to specify the filename
+    link.download = `artwork-slide-${currentSlideIndex + 1}.png`;
+
+    // Programmatically trigger the click event on the link
+    link.click();
+  } else {
+    alert("No artwork found to save!");
+  }
+}
+
+// Attach the saveArtwork function to the save button
+document.getElementById("save-artwork").addEventListener("click", saveArtwork);
