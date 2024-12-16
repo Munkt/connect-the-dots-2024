@@ -75,6 +75,8 @@ button:hover {
   gap: 5rem;
   text-align: center;
   width: 36rem;
+  background-color: var(--beige);
+  z-index: 1;
 }
 .left-side .gradient {
   position: absolute;
@@ -90,7 +92,11 @@ button:hover {
 .titletype {
   transform: scale(115%);
 }
-
+.post-it {
+  display: none;
+  position: absolute;
+  scale: 80%;
+}
 // right-side
 .right-side {
   width: 50vw;

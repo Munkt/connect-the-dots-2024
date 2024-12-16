@@ -1,11 +1,14 @@
 const slides = document.querySelectorAll(".slide");
-let currentSlideIndex = 0;
 const refreshBtn = document.getElementById("refresh");
 const nextBtn = document.getElementById("next");
 const previousBtn = document.getElementById("previous");
+const titletypo = document.querySelector(".introduction");
 const startBtn = document.getElementById("start");
 const cover = document.querySelector(".cover");
+const images = document.querySelectorAll(".post-it");
 const RED_COLOR = "#f54e42";
+let currentSlideIndex = 0;
+let currentImageIndex = 0;
 
 // Previous point coordinates
 let lastX = null;
@@ -15,6 +18,7 @@ let lastY = null;
 startBtn.addEventListener("click", () => {
   if (cover) {
     cover.style.display = "none";
+    titletypo.style.display = "none";
   }
 });
 
@@ -58,11 +62,23 @@ function showSlide(index) {
 // Initialize: Show the first slide
 showSlide(currentSlideIndex);
 
+images.forEach((image, index) => {
+  image.style.display = index === 0 ? "block" : "none";
+});
+
 // Next button
 nextBtn.addEventListener("click", () => {
   if (currentSlideIndex < slides.length - 1) {
     currentSlideIndex++;
     showSlide(currentSlideIndex);
+  }
+
+  images[currentImageIndex].style.display = "none";
+
+  currentImageIndex++;
+
+  if (currentImageIndex < images.length) {
+    images[currentImageIndex].style.display = "block";
   }
 });
 
@@ -71,6 +87,14 @@ previousBtn.addEventListener("click", () => {
   if (currentSlideIndex > 0) {
     currentSlideIndex--;
     showSlide(currentSlideIndex);
+  }
+
+  images[currentImageIndex].style.display = "none";
+
+  currentImageIndex--;
+
+  if (currentImageIndex >= 0) {
+    images[currentImageIndex].style.display = "block";
   }
 });
 
