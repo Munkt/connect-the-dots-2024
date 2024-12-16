@@ -316,11 +316,12 @@ function initializeSlide9() {
   });
 }
 
+// 슬라이드 10번 전용 모션 초기화 함수
 function initializeSlide10Canvas(canvas) {
   const ctx = canvas.getContext("2d");
   const colors = ["#f7c4c4", "#f4a69e", "#f0867a", "#ec6358", "#d82121"];
 
-  // High-resolution display support
+  // 고해상도 디스플레이 지원
   const ratio = window.devicePixelRatio || 1;
   const width = 756;
   const height = 650;
@@ -331,56 +332,86 @@ function initializeSlide10Canvas(canvas) {
   canvas.height = height * ratio;
   ctx.scale(ratio, ratio);
 
-  let lastDotX = null;
-  let lastDotY = null;
+  let points = []; // 점들의 배열
 
-  // Place a dot at the current position
-  function placeDot(x, y) {
-    const dotColor = colors[Math.floor(Math.random() * colors.length)];
-    ctx.beginPath();
-    ctx.arc(x, y, 3, 0, Math.PI * 2); // 3px radius
-    ctx.fillStyle = dotColor;
-    ctx.fill();
+  // 점 생성 함수
+  function createDot(baseX, baseY) {
+    const x = baseX + (Math.random() * 40 - 20); // 마우스 근처에 20~60px 범위 랜덤 위치
+    const y = baseY + (Math.random() * 40 - 20);
+    const color = colors[Math.floor(Math.random() * colors.length)];
+    const radius = Math.random() * 3 + 1; // 1~4px 크기
+
+    points.push({ x, y, color, radius });
   }
 
-  // Draw a line between the last dot and the current dot
-  function drawLineToDot(x, y) {
-    const lineColor = colors[Math.floor(Math.random() * colors.length)];
-    ctx.beginPath();
-    ctx.moveTo(lastDotX, lastDotY);
-    ctx.lineTo(x, y);
-    ctx.strokeStyle = lineColor;
-    ctx.lineWidth = 2;
-    ctx.stroke();
+  // 점과 점 연결 함수
+  function connectNearbyDots() {
+    for (let i = 0; i < points.length; i++) {
+      for (let j = i + 1; j < points.length; j++) {
+        const distance = Math.hypot(points[i].x - points[j].x, points[i].y - points[j].y);
+        if (distance < 100) {
+          // 100px 이내의 점들 연결
+          ctx.beginPath();
+          ctx.moveTo(points[i].x, points[i].y);
+          ctx.lineTo(points[j].x, points[j].y);
+          ctx.strokeStyle = points[i].color;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        }
+      }
+    }
   }
 
-  // Mouse move event on the canvas
+  // 애니메이션 함수
+  function animate() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height); // 캔버스 초기화
+
+    // 점 그리기
+    points.forEach((point) => {
+      ctx.beginPath();
+      ctx.arc(point.x, point.y, point.radius, 0, Math.PI * 2);
+      ctx.fillStyle = point.color;
+      ctx.fill();
+    });
+
+    // 점들 간 연결
+    connectNearbyDots();
+
+    requestAnimationFrame(animate); // 애니메이션 반복 호출
+  }
+
+  let lastMouseTime = 0;
+
+  // 마우스 움직임 이벤트
   canvas.addEventListener("mousemove", (e) => {
+    const now = performance.now();
+    if (now - lastMouseTime < 100) return; // 0.1초 간격으로 점 생성 (반응 속도 증가)
+
     const rect = canvas.getBoundingClientRect();
     const x = ((e.clientX - rect.left) * (canvas.width / rect.width)) / ratio;
     const y = ((e.clientY - rect.top) * (canvas.height / rect.height)) / ratio;
 
-    // Place a dot and connect it to the last dot at random intervals
-    if (Math.random() < 0.05) {
-      // 5% chance per mousemove
-      if (lastDotX !== null && lastDotY !== null) {
-        drawLineToDot(x, y); // Draw a line to the new dot
-      }
-
-      placeDot(x, y); // Place the new dot
-      lastDotX = x; // Update last dot position
-      lastDotY = y;
-    }
+    createDot(x, y); // 점 생성
+    lastMouseTime = now;
   });
 
-  // Reset coordinates when mouse leaves canvas
   canvas.addEventListener("mouseleave", () => {
-    lastDotX = null;
-    lastDotY = null;
+    lastMouseTime = 0;
   });
+
+  animate(); // 애니메이션 시작
+
+  // Refresh 버튼 동작 추가
+  const refreshBtn = document.getElementById("refresh");
+  if (refreshBtn) {
+    refreshBtn.addEventListener("click", () => {
+      points = []; // 점 배열 초기화
+      ctx.clearRect(0, 0, canvas.width, canvas.height); // 캔버스 초기화
+    });
+  }
 }
 
-// Initialize slide 10 canvas
+// 슬라이드 10번 캔버스 초기화
 const slide10Canvas = document.querySelector("#slide10 .drawing-canvas");
 if (slide10Canvas) {
   initializeSlide10Canvas(slide10Canvas);
